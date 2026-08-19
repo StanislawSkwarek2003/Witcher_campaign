@@ -1,0 +1,519 @@
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Karta postaci — Witcher RPG</title>
+<style>
+  :root{
+    --bg:#f4f1ea; --surface:#ffffff; --border:#d8d2c2; --border-strong:#b8ae94;
+    --text:#241f16; --text-secondary:#6b6250; --text-muted:#948a72;
+    --accent:#1d5f56; --accent-bg:#e1f0ec; --danger:#a32d2d; --danger-bg:#fcebeb;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+  body{
+    margin:0; padding:16px; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.5; touch-action:manipulation;
+    overflow-x:hidden;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+  h1{font-size:22px;font-weight:600;margin:0 0 4px;}
+  .subtitle{color:var(--text-secondary);font-size:13px;margin:0 0 20px;}
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;
+  }
+  .card h2{font-size:15px;font-weight:600;margin:0 0 12px;color:var(--text);}
+  .card h2 .hint{font-weight:400;color:var(--text-muted);font-size:12px;}
+  label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:3px;}
+  input[type=text], input[type=number], select, textarea{
+    width:100%;padding:10px;border:1px solid var(--border-strong);border-radius:6px;
+    font-size:16px;background:var(--surface);color:var(--text);font-family:inherit;
+    min-height:44px;-webkit-appearance:none;appearance:none;
+  }
+  select{
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b6250' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right 10px center;background-size:16px;
+    padding-right:32px;
+  }
+  input[type=number]{padding:10px 6px;text-align:center;}
+  /* Chowamy natywne strzałki spinnera — na mobile są za małe by w nie trafić, a przy inputmode=numeric zwykle i tak nie ma dedykowanej klawiatury numerycznej */
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{
+    -webkit-appearance:none;margin:0;
+  }
+  input[type=number]{-moz-appearance:textfield;}
+  textarea{resize:vertical;min-height:70px;}
+  .row{display:flex;gap:10px;margin-bottom:10px;}
+  .row > div{flex:1;min-width:0;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;}
+  .pts-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+  .pts-badge{font-size:14px;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--accent-bg);color:var(--accent);}
+  .pts-badge.over{background:var(--danger-bg);color:var(--danger);}
+  .attr-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;gap:10px;}
+  .attr-row label{margin:0;font-size:13px;color:var(--text);flex:1;}
+  .attr-row label span{color:var(--text-muted);font-size:11px;display:block;}
+  .attr-row input{width:64px;flex-shrink:0;}
+  .skill-row{
+    display:grid;grid-template-columns:1fr 44px 56px;align-items:center;gap:8px;
+    padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;
+  }
+  .skill-row:last-child{border-bottom:none;}
+  .skill-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px;}
+  .skill-attr{color:var(--text-muted);font-size:11px;text-align:center;}
+  .skill-row input[type=number]{padding:8px 4px;font-size:14px;min-height:40px;}
+  .skill-bonus{font-size:11px;text-align:center;color:var(--text-muted);}
+  .skill-bonus.active{color:var(--accent);font-weight:600;}
+  .skill-total{font-weight:600;text-align:center;}
+  .prof-hint{font-size:12px;color:var(--text-muted);margin:6px 0 0;}
+  .defining-box{
+    margin-top:12px;padding:12px 14px;border:1.5px solid var(--accent);border-radius:8px;
+    background:var(--accent-bg);display:none;
+  }
+  .defining-box.show{display:block;}
+  .defining-box .dlabel{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--accent);margin:0 0 4px;}
+  .defining-box .dname{font-weight:600;font-size:15px;color:var(--text);margin:0 0 6px;}
+  .defining-box .dval{font-size:13px;color:var(--text-secondary);line-height:1.5;}
+  .item-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .item-row input{flex:1;min-width:0;}
+  .item-row button{flex-shrink:0;width:44px;height:44px;padding:0;font-size:16px;}
+  button{
+    background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;
+    padding:10px 14px;font-size:14px;cursor:pointer;color:var(--text);font-family:inherit;
+    min-height:44px;touch-action:manipulation;
+  }
+  button:active{transform:scale(0.97);}
+  .btn-add{font-size:13px;width:100%;}
+  .actions{display:flex;gap:10px;margin-top:20px;margin-bottom:40px;flex-wrap:wrap;}
+  .actions button{flex:1;min-width:140px;padding:14px 12px;font-weight:600;font-size:14px;}
+  .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:var(--text);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;
+    opacity:0;pointer-events:none;transition:opacity 0.25s;z-index:100;
+  }
+  .toast.show{opacity:1;}
+  textarea#mdpreview{width:100%;min-height:200px;font-family:monospace;font-size:11px;background:#faf9f5;}
+  @media (max-width:480px){
+    .row{flex-direction:column;gap:8px;}
+    .skill-row{grid-template-columns:1fr 40px 50px;gap:6px;font-size:12px;}
+    .skill-name{white-space:normal;line-height:1.25;}
+    body{padding:12px;}
+    .wrap{max-width:100%;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Karta postaci — Witcher RPG</h1>
+  <p class="subtitle">Tworzenie postaci gracza. Wypełnij pola, następnie pobierz plik .md do importu.</p>
+
+  <div class="card">
+    <h2>Dane podstawowe</h2>
+    <div class="row">
+      <div>
+        <label for="pname">Imię postaci</label>
+        <input id="pname" type="text" placeholder="np. Kaska Torma" enterkeyhint="next" autocomplete="off" autocapitalize="words">
+      </div>
+      <div>
+        <label for="pplayer">Gracz (opcjonalnie)</label>
+        <input id="pplayer" type="text" placeholder="np. Marek" enterkeyhint="done" autocomplete="off" autocapitalize="words">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="prace">Rasa</label>
+        <select id="prace">
+          <option>Człowiek</option>
+          <option>Krasnolud</option>
+          <option>Elf</option>
+          <option>Niziołek</option>
+        </select>
+      </div>
+      <div>
+        <label for="pprof">Profesja</label>
+        <select id="pprof"></select>
+      </div>
+    </div>
+    <p class="prof-hint" id="profhint"></p>
+    <div id="definingBox" class="defining-box">
+      <p class="dlabel">Zdolność wiodąca profesji</p>
+      <p class="dname" id="dname"></p>
+      <p class="dval" id="dval"></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="pts-header">
+      <h2 style="margin:0">Atrybuty <span class="hint">pula 60, limit 1-10 każdy</span></h2>
+      <span id="attrpts" class="pts-badge">60 / 60</span>
+    </div>
+    <div id="attrs" class="grid2"></div>
+  </div>
+
+  <div class="card">
+    <div class="pts-header">
+      <h2 style="margin:0">Umiejętności <span class="hint">pula 30, max 6 na skill</span></h2>
+      <span id="skillpts" class="pts-badge">30 / 30</span>
+    </div>
+    <div id="skills"></div>
+  </div>
+
+  <div class="card">
+    <h2>Ekwipunek</h2>
+    <div id="items"></div>
+    <button id="additem" class="btn-add"><span aria-hidden="true">+</span> Dodaj przedmiot</button>
+  </div>
+
+  <div class="card">
+    <h2>Notatki / dodatkowe zdolności</h2>
+    <textarea id="pnotes" placeholder="Dowolne dodatkowe informacje o postaci..."></textarea>
+  </div>
+
+  <div class="actions">
+    <button id="btnPreview">Podgląd Markdown</button>
+    <button id="btnDownload" class="btn-primary">Pobierz plik .md</button>
+  </div>
+
+  <div class="card" id="previewCard" style="display:none">
+    <h2>Podgląd eksportu</h2>
+    <textarea id="mdpreview" readonly></textarea>
+  </div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ============================================================
+   KONFIGURACJA — dane do edycji przez GM
+   ============================================================ */
+const ATTR_POOL = 60;
+const ATTR_MIN = 1;
+const ATTR_MAX = 10;
+const SKILL_BASE_MAX = 6;
+const SKILL_POOL = 30;
+
+const ATTRS = [
+  ["INT","Inteligencja"],["REF","Refleks"],["DEX","Zręczność"],["BODY","Ciało"],
+  ["SPD","Szybkość"],["EMP","Empatia"],["CRA","Rzemiosło"],["WILL","Wola"],["LUCK","Szczęście"]
+];
+
+// 18 umiejętności: [nazwa, atrybut bazowy]
+const SKILLS = [
+  ["Athletics","BODY"],["Awareness","INT"],["Business","INT"],["Charisma","EMP"],
+  ["Courage","WILL"],["Crossbow","REF"],["Deceit","EMP"],["Deduction","INT"],
+  ["Dodge/Escape","REF"],["First Aid","DEX"],["Human Perception","EMP"],["Melee","REF"],
+  ["Persuasion","EMP"],["Physique","BODY"],["Resist Coercion","WILL"],["Small Blades","REF"],
+  ["Social Etiquette","EMP"],["Streetwise","INT"]
+];
+
+const PROFESSIONS = [
+  { name:"Doctor", definingName:"Healing Hands", definingValue:16,
+    definingDesc:"Jedyna zdolność pozwalająca leczyć Critical Wounds. Może też być użyta zamiast First Aid przy dowolnym takim teście." },
+  { name:"Man At Arms", definingName:"Tough As Nails", definingValue:16,
+    definingDesc:"Gdy HP spadnie do 0 lub poniżej, test przeciw DC = |ujemne HP| × 2 pozwala walczyć dalej, jakby postać była tylko na progu ran (Wound Threshold)." },
+  { name:"Bard", definingName:"Busking", definingValue:15,
+    definingDesc:"Godzinny występ w centrum miasta — wynik testu to liczba zarobionych koron. Fumble lub ujemny wynik daje karę Mild (-1) do Charisma wobec mieszkańców do końca dnia." },
+  { name:"Mage", definingName:"Magic Training", definingValue:15,
+    definingDesc:"Test przy napotkaniu zjawiska magicznego, nieznanego zaklęcia lub pytania z teorii magii — sukces daje pełną wiedzę o zjawisku. Może też służyć jako wykrywanie aktywnej magii lub widm." },
+  { name:"Criminal", definingName:"Practiced Paranoia", definingValue:12,
+    definingDesc:"W promieniu 10m od pułapki lub zasadzki — automatyczny test wykrycia zagrożenia (nawet bez sukcesu, postać wyczuwa, że coś jest nie tak)." }
+];
+
+/* ============================================================
+   RENDER: Profesje
+   ============================================================ */
+const profSelect = document.getElementById('pprof');
+const blankOpt = document.createElement('option');
+blankOpt.value = ""; blankOpt.textContent = "— wybierz profesję —";
+profSelect.appendChild(blankOpt);
+PROFESSIONS.forEach((p, i) => {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = `${p.name} (${p.definingName} ${p.definingValue})`;
+  profSelect.appendChild(opt);
+});
+
+function getSelectedProfession(){
+  const v = profSelect.value;
+  return v === "" ? null : PROFESSIONS[parseInt(v)];
+}
+
+function updateProfessionUI(){
+  const prof = getSelectedProfession();
+  const hint = document.getElementById('profhint');
+  const box = document.getElementById('definingBox');
+  if(!prof){
+    box.classList.remove('show');
+  } else {
+    hint.textContent = "";
+    document.getElementById('dname').textContent = `${prof.definingName} — ${prof.definingValue}`;
+    document.getElementById('dval').textContent = prof.definingDesc;
+    box.classList.add('show');
+  }
+  renderSkills();
+}
+profSelect.addEventListener('change', updateProfessionUI);
+
+/* ============================================================
+   RENDER: Atrybuty
+   ============================================================ */
+const attrsEl = document.getElementById('attrs');
+const attrPtsEl = document.getElementById('attrpts');
+ATTRS.forEach(([code,label])=>{
+  const div = document.createElement('div');
+  div.className = 'attr-row';
+  div.innerHTML = `<label>${code} <span>${label}</span></label><input type="number" inputmode="numeric" pattern="[0-9]*" value="1" min="${ATTR_MIN}" max="${ATTR_MAX}" data-attr="${code}">`;
+  attrsEl.appendChild(div);
+});
+function updateAttrPts(){
+  let spent = 0;
+  attrsEl.querySelectorAll('[data-attr]').forEach(inp=>{
+    let v = parseInt(inp.value) || ATTR_MIN;
+    if(v < ATTR_MIN) v = ATTR_MIN;
+    if(v > ATTR_MAX) v = ATTR_MAX;
+    inp.value = v;
+    spent += v;
+  });
+  const remaining = ATTR_POOL - spent;
+  attrPtsEl.textContent = `${remaining} / ${ATTR_POOL}`;
+  attrPtsEl.classList.toggle('over', remaining < 0);
+}
+attrsEl.querySelectorAll('[data-attr]').forEach(inp=>{
+  inp.addEventListener('input', updateAttrPts);
+  inp.addEventListener('change', updateAttrPts);
+});
+updateAttrPts();
+function getAttrValue(code){
+  const inp = attrsEl.querySelector(`[data-attr="${code}"]`);
+  return inp ? (parseInt(inp.value)||0) : 0;
+}
+
+/* ============================================================
+   RENDER: Umiejętności
+   ============================================================ */
+const skillsEl = document.getElementById('skills');
+const skillPtsEl = document.getElementById('skillpts');
+function updateSkillPts(){
+  let spent = 0;
+  skillsEl.querySelectorAll('[data-base]').forEach(inp=>{ spent += parseInt(inp.value) || 0; });
+  const remaining = SKILL_POOL - spent;
+  skillPtsEl.textContent = `${remaining} / ${SKILL_POOL}`;
+  skillPtsEl.classList.toggle('over', remaining < 0);
+}
+function renderSkills(){
+  const existing = {};
+  skillsEl.querySelectorAll('[data-base]').forEach(inp=>{ existing[inp.dataset.base] = inp.value; });
+  skillsEl.innerHTML = '';
+  SKILLS.forEach(([name, attr])=>{
+    const row = document.createElement('div');
+    row.className = 'skill-row';
+    const savedVal = existing[name] !== undefined ? existing[name] : 0;
+    row.innerHTML = `
+      <span class="skill-name">${name}</span>
+      <span class="skill-attr">${attr}</span>
+      <input type="number" inputmode="numeric" pattern="[0-9]*" value="${savedVal}" min="0" max="${SKILL_BASE_MAX}" data-base="${name}">`;
+    skillsEl.appendChild(row);
+  });
+  skillsEl.querySelectorAll('[data-base]').forEach(inp=>{
+    inp.addEventListener('input', ()=>updateSkillTotal(inp.dataset.base));
+    inp.addEventListener('change', ()=>updateSkillTotal(inp.dataset.base));
+  });
+  updateSkillPts();
+}
+function updateSkillTotal(name){
+  const inp = skillsEl.querySelector(`[data-base="${name}"]`);
+  let base = parseInt(inp.value) || 0;
+  if(base < 0) base = 0;
+  if(base > SKILL_BASE_MAX) base = SKILL_BASE_MAX;
+  inp.value = base;
+  updateSkillPts();
+}
+updateProfessionUI();
+
+/* ============================================================
+   RENDER: Ekwipunek
+   ============================================================ */
+const itemsEl = document.getElementById('items');
+function addItem(nameVal){
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.innerHTML = `
+    <input type="text" placeholder="nazwa przedmiotu" class="item-name" value="${nameVal||''}" enterkeyhint="done" autocomplete="off">
+    <button type="button" aria-label="usuń przedmiot">✕</button>`;
+  row.querySelector('button').addEventListener('click', ()=>row.remove());
+  itemsEl.appendChild(row);
+}
+document.getElementById('additem').addEventListener('click', ()=>addItem());
+addItem(); addItem();
+
+/* ============================================================
+   EKSPORT MARKDOWN
+   ============================================================
+   Format: YAML front-matter (dane maszynowe) + czytelny Markdown.
+   Sekcje YAML używają prostych typów (string/int/list of maps),
+   żeby dało się to sparsować dowolnym standardowym parserem YAML
+   bez specjalnej logiki.
+   ============================================================ */
+function yamlEscape(str){
+  if(str === null || str === undefined) return '""';
+  const s = String(str);
+  if(/[:#{}\[\],&*!|>'"%@`]/.test(s) || s.trim() !== s || s === ''){
+    return '"' + s.replace(/\\/g,'\\\\').replace(/"/g,'\\"') + '"';
+  }
+  return s;
+}
+
+function buildMarkdown(){
+  const name = document.getElementById('pname').value.trim() || "Bez nazwy";
+  const player = document.getElementById('pplayer').value.trim();
+  const race = document.getElementById('prace').value;
+  const prof = getSelectedProfession();
+  const profName = prof ? prof.name : "";
+
+  const attrs = {};
+  ATTRS.forEach(([code])=>{ attrs[code] = getAttrValue(code); });
+
+  const skillRows = SKILLS.map(([sname, attr])=>{
+    const inp = skillsEl.querySelector(`[data-base="${sname}"]`);
+    const base = inp ? (parseInt(inp.value)||0) : 0;
+    return { name: sname, attr, base };
+  });
+
+  // HP/STA/Pancerz: nie wypełniane przez gracza — GM ustala i dopisuje ręcznie do pliku po eksporcie.
+  const items = [];
+  itemsEl.querySelectorAll('.item-row').forEach(row=>{
+    const n = row.querySelector('.item-name').value.trim();
+    if(n) items.push({name:n, effect:""});
+  });
+
+  const notes = document.getElementById('pnotes').value.trim();
+
+  // ---- YAML front-matter ----
+  let yaml = "---\n";
+  yaml += `system: witcher_rpg\n`;
+  yaml += `version: 1\n`;
+  yaml += `name: ${yamlEscape(name)}\n`;
+  if(player) yaml += `player: ${yamlEscape(player)}\n`;
+  yaml += `race: ${yamlEscape(race)}\n`;
+  yaml += `profession: ${yamlEscape(profName)}\n`;
+  yaml += `attributes:\n`;
+  ATTRS.forEach(([code])=>{ yaml += `  ${code}: ${attrs[code]}\n`; });
+  yaml += `skills:\n`;
+  skillRows.forEach(s=>{
+    yaml += `  - name: ${yamlEscape(s.name)}\n`;
+    yaml += `    attribute: ${s.attr}\n`;
+    yaml += `    base: ${s.base}\n`;
+  });
+  if(prof){
+    yaml += `defining_skill:\n`;
+    yaml += `  name: ${yamlEscape(prof.definingName)}\n`;
+    yaml += `  value: ${prof.definingValue}\n`;
+    yaml += `  description: ${yamlEscape(prof.definingDesc)}\n`;
+  }
+  yaml += `health:\n`;
+  yaml += `  hp: null # GM: uzupełnij ręcznie\n`;
+  yaml += `  stamina: null # GM: uzupełnij ręcznie\n`;
+  yaml += `armor:\n`;
+  yaml += `  head: null # GM: uzupełnij ręcznie\n`;
+  yaml += `  upper_body: null # GM: uzupełnij ręcznie\n`;
+  yaml += `  lower_body: null # GM: uzupełnij ręcznie\n`;
+  yaml += `items:\n`;
+  if(items.length === 0){
+    yaml += `  []\n`;
+  } else {
+    items.forEach(it=>{
+      yaml += `  - name: ${yamlEscape(it.name)}\n`;
+      yaml += `    effect: null # GM: uzupełnij ręcznie\n`;
+    });
+  }
+  if(notes) yaml += `notes: ${yamlEscape(notes)}\n`;
+  yaml += "---\n\n";
+
+  // ---- Czytelny Markdown ----
+  let md = `# ${name}\n\n`;
+  if(player) md += `*Gracz: ${player}*\n\n`;
+  md += `**Rasa:** ${race}  \n**Profesja:** ${profName || "—"}\n\n`;
+
+  md += `## Atrybuty\n\n`;
+  md += `| Atrybut | Wartość |\n|---|---|\n`;
+  ATTRS.forEach(([code,label])=>{ md += `| ${code} (${label}) | ${attrs[code]} |\n`; });
+  md += `\n`;
+
+  md += `## Umiejętności\n\n`;
+  md += `| Umiejętność | Atrybut | Baza |\n|---|---|---|\n`;
+  skillRows.forEach(s=>{
+    md += `| ${s.name} | ${s.attr} | ${s.base} |\n`;
+  });
+  md += `\n`;
+
+  if(prof){
+    md += `## Zdolność wiodąca\n\n`;
+    md += `**${prof.definingName} (${prof.definingValue})**  \n${prof.definingDesc}\n\n`;
+  }
+
+  md += `## Zdrowie i pancerz\n\n`;
+  md += `*Do uzupełnienia przez GM.*\n\n`;
+  md += `| | Wartość |\n|---|---|\n`;
+  md += `| HP | _(GM)_ |\n| Stamina | _(GM)_ |\n`;
+  md += `| Pancerz — głowa | _(GM)_ |\n| Pancerz — tors | _(GM)_ |\n| Pancerz — nogi | _(GM)_ |\n\n`;
+
+  md += `## Ekwipunek\n\n`;
+  if(items.length === 0){
+    md += `*Brak przedmiotów.*\n\n`;
+  } else {
+    md += `*Efekt i statystyki przedmiotów uzupełnia GM.*\n\n`;
+    md += `| Nazwa | Efekt |\n|---|---|\n`;
+    items.forEach(it=>{ md += `| ${it.name} | _(GM)_ |\n`; });
+    md += `\n`;
+  }
+
+  if(notes){
+    md += `## Notatki\n\n${notes}\n`;
+  }
+
+  return yaml + md;
+}
+
+function slugify(str){
+  return str.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'') || 'postac';
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+document.getElementById('btnPreview').addEventListener('click', ()=>{
+  const card = document.getElementById('previewCard');
+  const ta = document.getElementById('mdpreview');
+  ta.value = buildMarkdown();
+  card.style.display = 'block';
+  card.scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+document.getElementById('btnDownload').addEventListener('click', ()=>{
+  const md = buildMarkdown();
+  const name = document.getElementById('pname').value.trim() || "postac";
+  const blob = new Blob([md], {type:'text/markdown;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${slugify(name)}.md`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Pobrano plik .md');
+});
+</script>
+</body>
+</html>
